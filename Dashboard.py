@@ -28,7 +28,7 @@ def input_data():
 # Function to display the "Select Field" tab
 def select_field():
     st.write('Select Field')
-    selected_field = st.selectbox('Select an option: ',['Day', 'Time', 'ZipCode'])
+    selected_field = st.selectbox('Select an option: ',['Day', 'Time', 'ZipCode', 'Co-ordinate density plot', 'Boxplot of Incident Scores', 'Geospatial Distribution of Crime Incidents', 'Temporal Trends of Crime Incidents', 'Distribution of Incident Scores', 'Correlation Matrix'])
 
     # Display an image associated with the selected field
     if selected_field == 'Day':
@@ -37,6 +37,18 @@ def select_field():
         st.image('Incidents-Time.png')
     elif selected_field == 'ZipCode':
         st.image('Incidents-ZipCode.png')
+    elif selected_field == 'Co-ordinate density plot':
+        st.image('./plots/2D_Density_Plot_of_X_and_Y_Coordinates.png')
+    elif selected_field == 'Boxplot of Incident_Scores':
+        st.image('./plots/Boxplot_of_Incident_Scores.png')
+    elif selected_field == 'Geospatial Distribution of Crime Incidents':
+        st.image('./plots/Geospatial_Distribution_of_Crime_Incidents.png')
+    elif selected_field == 'Temporal Trends of Crime Incidents':
+        st.image('./plots/Temporal_Trends_of_Crime_Incidents.png')
+    elif selected_field == 'Distribution of Incident Scores':
+        st.image('./plots/Distribution_of_Incident_Scores.png')
+    elif selected_field == 'Correlation Matrix':
+        st.image('./plots/Correlation_Matrix_Heatmap.png')
 
 def ZipCode_DataFrame():
     # Group the data by zip code and count the number of entries for each zip code
