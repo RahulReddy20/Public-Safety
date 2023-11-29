@@ -4,8 +4,139 @@ import pandas as pd
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
+import plotly.express as px
+import seaborn as sns
+import pydeck as pdk
 
 data = pd.read_csv("filtered_data_3.csv")
+
+# data = pd.read_csv("processed_police_incidents.csv")
+graph_data = pd.read_csv("crime_data_final.csv")
+features = ['Day1 of the Week', 'Time Bin' , 'Zip Code', 'Sector', 'Division', 'X Coordinate', 'Y Cordinate', 'Council District', 'Type  Location']
+label = ['Incident_Score']
+
+data_filter = graph_data[features + label]
+data_filter = data_filter.dropna()
+
+X = data_filter[features]
+Y = data_filter[label]
+print("feature info: \n", X.info())
+print()
+print("label info: \n", Y.info())
+# data_filter.to_csv('crime_data_final.csv', index=False)
+
+#######
+
+crime_by_weekday = X.groupby('Day1 of the Week').size() / len(X) * 100
+
+fig = px.bar(
+    crime_by_weekday,
+    x=crime_by_weekday.index,
+    y=crime_by_weekday.values,
+    labels={'y': 'Percentage of Crime', 'x': 'Day of the Week'},
+    title='Percentage of Crime by Weekday',
+)
+
+st.title("Crime Data Analysis")
+st.plotly_chart(fig)
+
+#######
+
+def calculate_percentage_by_time_bin(data):
+    total_crimes = len(data)
+    data['Percentage of Crime'] = (data.groupby('Time Bin')['Time Bin'].transform('count') / total_crimes) * 100
+    return data.drop_duplicates(subset='Time Bin')
+
+X_percentage = calculate_percentage_by_time_bin(X)
+
+st.subheader("Percentage of Crime by Time Bin")
+fig = px.bar(X_percentage, x='Time Bin', y='Percentage of Crime', labels={'Percentage of Crime': 'Percentage'})
+st.plotly_chart(fig)
+
+#######
+
+def get_top_10_locations(data):
+    top_locations = data['Type  Location'].value_counts().nlargest(10)
+    return top_locations
+
+top_locations = get_top_10_locations(X)
+
+st.subheader("Top 10 Locations Based on Crime Count")
+fig = px.bar(top_locations, x=top_locations.index, y=top_locations.values, labels={'y': 'Crime Count'})
+fig.update_layout(xaxis_title='Location', yaxis_title='Crime Count')
+st.plotly_chart(fig)
+
+#######
+
+def get_top_10_council_districts(data):
+    top_council_districts = data['Council District'].value_counts().nlargest(10)
+    return top_council_districts
+
+top_council_districts = get_top_10_council_districts(X)
+
+st.subheader("Top 10 Council Districts Based on Crime Count")
+fig = px.bar(top_council_districts, x=top_council_districts.index, y=top_council_districts.values, labels={'y': 'Crime Count'})
+fig.update_layout(xaxis_title='Council District', yaxis_title='Crime Count')
+st.plotly_chart(fig)
+
+#######
+
+st.subheader("Geospatial Distribution of Crime Incidents")
+plt.figure(figsize=(10, 8))
+sns.scatterplot(data=data_filter, x='X Coordinate', y='Y Cordinate', hue='Incident_Score', palette='viridis', s=50)
+plt.title("Geospatial Distribution of Crime Incidents")
+plt.xlabel("X Coordinate")
+plt.ylabel("Y Coordinate")
+st.pyplot(plt)
+
+#######
+
+st.subheader("Temporal Trends of Crime Incidents")
+
+temporal_data = X.groupby(['Day1 of the Week', 'Time Bin']).size().reset_index(name='Incident Count')
+
+plt.figure(figsize=(10, 6))
+sns.lineplot(data=temporal_data, x='Day1 of the Week', y='Incident Count', hue='Time Bin', marker='o')
+plt.title("Temporal Trends of Crime Incidents")
+plt.xlabel("Day of the Week")
+plt.ylabel("Incident Count")
+plt.legend(title='Time Bin', bbox_to_anchor=(1.05, 1), loc='upper left')
+st.pyplot(plt)
+
+#######
+
+st.subheader("Boxplot of Incident Scores for Each Time Bin")
+
+plt.figure(figsize=(10, 6))
+sns.boxplot(data=data_filter, x='Time Bin', y='Incident_Score', palette='viridis')
+plt.title("Distribution of Incident Scores for Each Time Bin")
+plt.xlabel("Time Bin")
+plt.ylabel("Incident Scores")
+st.pyplot(plt)
+
+#######
+
+st.subheader("Distribution of Incident Scores")
+
+plt.figure(figsize=(10, 6))
+plt.hist(data_filter['Incident_Score'], bins=20, color='skyblue', edgecolor='black')
+plt.title("Distribution of Incident Scores")
+plt.xlabel("Incident Scores")
+plt.ylabel("Frequency")
+st.pyplot(plt)
+
+#######
+
+st.subheader("Boxplot of Incident Scores")
+
+plt.figure(figsize=(10, 6))
+plt.boxplot(data_filter['Incident_Score'], vert=True, patch_artist=True, boxprops=dict(facecolor='skyblue'))
+plt.title("Boxplot of Incident Scores")
+plt.xlabel("Incident Scores")
+st.pyplot(plt)
+
+#######
 
 # Function to display the "View Data" tab
 def view_data():
