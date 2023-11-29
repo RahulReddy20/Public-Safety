@@ -11,6 +11,8 @@ import pydeck as pdk
 
 data = pd.read_csv("filtered_data_3.csv")
 
+## construct data for graphs
+
 # data = pd.read_csv("processed_police_incidents.csv")
 graph_data = pd.read_csv("crime_data_final.csv")
 features = ['Day1 of the Week', 'Time Bin' , 'Zip Code', 'Sector', 'Division', 'X Coordinate', 'Y Cordinate', 'Council District', 'Type  Location']
@@ -25,118 +27,6 @@ print("feature info: \n", X.info())
 print()
 print("label info: \n", Y.info())
 # data_filter.to_csv('crime_data_final.csv', index=False)
-
-#######
-
-crime_by_weekday = X.groupby('Day1 of the Week').size() / len(X) * 100
-
-fig = px.bar(
-    crime_by_weekday,
-    x=crime_by_weekday.index,
-    y=crime_by_weekday.values,
-    labels={'y': 'Percentage of Crime', 'x': 'Day of the Week'},
-    title='Percentage of Crime by Weekday',
-)
-
-st.title("Crime Data Analysis")
-st.plotly_chart(fig)
-
-#######
-
-def calculate_percentage_by_time_bin(data):
-    total_crimes = len(data)
-    data['Percentage of Crime'] = (data.groupby('Time Bin')['Time Bin'].transform('count') / total_crimes) * 100
-    return data.drop_duplicates(subset='Time Bin')
-
-X_percentage = calculate_percentage_by_time_bin(X)
-
-st.subheader("Percentage of Crime by Time Bin")
-fig = px.bar(X_percentage, x='Time Bin', y='Percentage of Crime', labels={'Percentage of Crime': 'Percentage'})
-st.plotly_chart(fig)
-
-#######
-
-def get_top_10_locations(data):
-    top_locations = data['Type  Location'].value_counts().nlargest(10)
-    return top_locations
-
-top_locations = get_top_10_locations(X)
-
-st.subheader("Top 10 Locations Based on Crime Count")
-fig = px.bar(top_locations, x=top_locations.index, y=top_locations.values, labels={'y': 'Crime Count'})
-fig.update_layout(xaxis_title='Location', yaxis_title='Crime Count')
-st.plotly_chart(fig)
-
-#######
-
-def get_top_10_council_districts(data):
-    top_council_districts = data['Council District'].value_counts().nlargest(10)
-    return top_council_districts
-
-top_council_districts = get_top_10_council_districts(X)
-
-st.subheader("Top 10 Council Districts Based on Crime Count")
-fig = px.bar(top_council_districts, x=top_council_districts.index, y=top_council_districts.values, labels={'y': 'Crime Count'})
-fig.update_layout(xaxis_title='Council District', yaxis_title='Crime Count')
-st.plotly_chart(fig)
-
-#######
-
-st.subheader("Geospatial Distribution of Crime Incidents")
-plt.figure(figsize=(10, 8))
-sns.scatterplot(data=data_filter, x='X Coordinate', y='Y Cordinate', hue='Incident_Score', palette='viridis', s=50)
-plt.title("Geospatial Distribution of Crime Incidents")
-plt.xlabel("X Coordinate")
-plt.ylabel("Y Coordinate")
-st.pyplot(plt)
-
-#######
-
-st.subheader("Temporal Trends of Crime Incidents")
-
-temporal_data = X.groupby(['Day1 of the Week', 'Time Bin']).size().reset_index(name='Incident Count')
-
-plt.figure(figsize=(10, 6))
-sns.lineplot(data=temporal_data, x='Day1 of the Week', y='Incident Count', hue='Time Bin', marker='o')
-plt.title("Temporal Trends of Crime Incidents")
-plt.xlabel("Day of the Week")
-plt.ylabel("Incident Count")
-plt.legend(title='Time Bin', bbox_to_anchor=(1.05, 1), loc='upper left')
-st.pyplot(plt)
-
-#######
-
-st.subheader("Boxplot of Incident Scores for Each Time Bin")
-
-plt.figure(figsize=(10, 6))
-sns.boxplot(data=data_filter, x='Time Bin', y='Incident_Score', palette='viridis')
-plt.title("Distribution of Incident Scores for Each Time Bin")
-plt.xlabel("Time Bin")
-plt.ylabel("Incident Scores")
-st.pyplot(plt)
-
-#######
-
-st.subheader("Distribution of Incident Scores")
-
-plt.figure(figsize=(10, 6))
-plt.hist(data_filter['Incident_Score'], bins=20, color='skyblue', edgecolor='black')
-plt.title("Distribution of Incident Scores")
-plt.xlabel("Incident Scores")
-plt.ylabel("Frequency")
-st.pyplot(plt)
-
-#######
-
-st.subheader("Boxplot of Incident Scores")
-
-plt.figure(figsize=(10, 6))
-plt.boxplot(data_filter['Incident_Score'], vert=True, patch_artist=True, boxprops=dict(facecolor='skyblue'))
-plt.title("Boxplot of Incident Scores")
-plt.xlabel("Incident Scores")
-st.pyplot(plt)
-
-#######
 
 # Function to display the "View Data" tab
 def view_data():
@@ -156,30 +46,157 @@ def input_data():
         st.write('Time:', user_input3)
         st.write('Safety Score:', 0)
 
+def plot_boxplot_time_bin():
+    st.subheader("Boxplot of Incident Scores for Each Time Bin")
+
+    plt.figure(figsize=(10, 6))
+    sns.boxplot(data=data_filter, x='Time Bin', y='Incident_Score', palette='viridis')
+    plt.title("Distribution of Incident Scores for Each Time Bin")
+    plt.xlabel("Time Bin")
+    plt.ylabel("Incident Scores")
+    st.pyplot(plt)
+
+def plot_boxplot_incident_scores():
+    st.subheader("Boxplot of Incident Scores")
+
+    plt.figure(figsize=(10, 6))
+    plt.boxplot(data_filter['Incident_Score'], vert=True, patch_artist=True, boxprops=dict(facecolor='skyblue'))
+    plt.title("Boxplot of Incident Scores")
+    plt.xlabel("Incident Scores")
+    st.pyplot(plt)
+
+def plot_distribution_of_incident_scores():
+    st.subheader("Distribution of Incident Scores")
+
+    plt.figure(figsize=(10, 6))
+    plt.hist(data_filter['Incident_Score'], bins=20, color='skyblue', edgecolor='black')
+    plt.title("Distribution of Incident Scores")
+    plt.xlabel("Incident Scores")
+    plt.ylabel("Frequency")
+    st.pyplot(plt)
+
+def plot_temporal_trends_of_crime():
+    st.subheader("Temporal Trends of Crime Incidents")
+
+    temporal_data = X.groupby(['Day1 of the Week', 'Time Bin']).size().reset_index(name='Incident Count')
+
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(data=temporal_data, x='Day1 of the Week', y='Incident Count', hue='Time Bin', marker='o')
+    plt.title("Temporal Trends of Crime Incidents")
+    plt.xlabel("Day of the Week")
+    plt.ylabel("Incident Count")
+    plt.legend(title='Time Bin', bbox_to_anchor=(1.05, 1), loc='upper left')
+    st.pyplot(plt)
+
+def plot_geospatial_distribution_of_crime():
+    st.subheader("Geospatial Distribution of Crime Incidents")
+    plt.figure(figsize=(10, 8))
+    sns.scatterplot(data=data_filter, x='X Coordinate', y='Y Cordinate', hue='Incident_Score', palette='viridis', s=50)
+    plt.title("Geospatial Distribution of Crime Incidents")
+    plt.xlabel("X Coordinate")
+    plt.ylabel("Y Coordinate")
+    st.pyplot(plt)
+
+def get_top_10_council_districts(data):
+    top_council_districts = data['Council District'].value_counts().nlargest(10)
+    return top_council_districts
+
+def plot_top_10_council_districts():
+    top_council_districts = get_top_10_council_districts(X)
+
+    st.subheader("Top 10 Council Districts Based on Crime Count")
+    fig = px.bar(top_council_districts, x=top_council_districts.index, y=top_council_districts.values, labels={'y': 'Crime Count'})
+    fig.update_layout(xaxis_title='Council District', yaxis_title='Crime Count')
+    st.plotly_chart(fig)
+
+def get_top_10_locations(data):
+    top_locations = data['Type  Location'].value_counts().nlargest(10)
+    return top_locations
+
+def plot_top_10_locations():
+    top_locations = get_top_10_locations(X)
+
+    st.subheader("Top 10 Locations Based on Crime Count")
+    fig = px.bar(top_locations, x=top_locations.index, y=top_locations.values, labels={'y': 'Crime Count'})
+    fig.update_layout(xaxis_title='Location', yaxis_title='Crime Count')
+    st.plotly_chart(fig)
+
+def calculate_percentage_by_time_bin(data):
+    total_crimes = len(data)
+    data['Percentage of Crime'] = (data.groupby('Time Bin')['Time Bin'].transform('count') / total_crimes) * 100
+    return data.drop_duplicates(subset='Time Bin')
+
+def plot_percentage_by_time_bin():
+    X_percentage = calculate_percentage_by_time_bin(X)
+
+    st.subheader("Percentage of Crime by Time Bin")
+    fig = px.bar(X_percentage, x='Time Bin', y='Percentage of Crime', labels={'Percentage of Crime': 'Percentage'})
+    st.plotly_chart(fig)
+
+def plot_crime_by_weekday():
+    crime_by_weekday = X.groupby('Day1 of the Week').size() / len(X) * 100
+
+    fig = px.bar(
+        crime_by_weekday,
+        x=crime_by_weekday.index,
+        y=crime_by_weekday.values,
+        labels={'y': 'Percentage of Crime', 'x': 'Day of the Week'},
+        title='Percentage of Crime by Weekday',
+    )
+    st.plotly_chart(fig)
+
 # Function to display the "Select Field" tab
 def select_field():
     st.write('Select Field')
-    selected_field = st.selectbox('Select an option: ',['Day', 'Time', 'ZipCode', 'Co-ordinate density plot', 'Boxplot of Incident Scores', 'Geospatial Distribution of Crime Incidents', 'Temporal Trends of Crime Incidents', 'Distribution of Incident Scores', 'Correlation Matrix'])
+    selected_field = st.selectbox('Select an option: ',['Boxplot of Incident Scores for Each Time Bin', 
+                                                        'Boxplot of Incident Scores', 
+                                                        'Distribution of Incident Scores', 
+                                                        'Temporal Trends of Crime Incidents', 
+                                                        'Geospatial Distribution of Crime Incidents', 
+                                                        'Top 10 Council Districts Based on Crime Count', 
+                                                        'Top 10 Locations Based on Crime Count', 
+                                                        'Percentage of Crime by Time Bin', 
+                                                        'Percentage of Crime by Weekday', 
+                                                        #'Day', 'Time', 'ZipCode', 'Co-ordinate density plot', 'Boxplot of Incident Scores', 'Geospatial Distribution of Crime Incidents', 'Temporal Trends of Crime Incidents', 'Distribution of Incident Scores', 'Correlation Matrix'
+                                                        ])
 
     # Display an image associated with the selected field
-    if selected_field == 'Day':
-        st.image('Incidents-Day.png')
-    elif selected_field == 'Time':
-        st.image('Incidents-Time.png')
-    elif selected_field == 'ZipCode':
-        st.image('Incidents-ZipCode.png')
-    elif selected_field == 'Co-ordinate density plot':
-        st.image('./plots/2D_Density_Plot_of_X_and_Y_Coordinates.png')
-    elif selected_field == 'Boxplot of Incident_Scores':
-        st.image('./plots/Boxplot_of_Incident_Scores.png')
-    elif selected_field == 'Geospatial Distribution of Crime Incidents':
-        st.image('./plots/Geospatial_Distribution_of_Crime_Incidents.png')
-    elif selected_field == 'Temporal Trends of Crime Incidents':
-        st.image('./plots/Temporal_Trends_of_Crime_Incidents.png')
+    # if selected_field == 'Day':
+    #     st.image('Incidents-Day.png')
+    # elif selected_field == 'Time':
+    #     st.image('Incidents-Time.png')
+    # elif selected_field == 'ZipCode':
+    #     st.image('Incidents-ZipCode.png')
+    # elif selected_field == 'Co-ordinate density plot':
+    #     st.image('./plots/2D_Density_Plot_of_X_and_Y_Coordinates.png')
+    # elif selected_field == 'Boxplot of Incident_Scores':
+    #     st.image('./plots/Boxplot_of_Incident_Scores.png')
+    # elif selected_field == 'Geospatial Distribution of Crime Incidents':
+    #     st.image('./plots/Geospatial_Distribution_of_Crime_Incidents.png')
+    # elif selected_field == 'Temporal Trends of Crime Incidents':
+    #     st.image('./plots/Temporal_Trends_of_Crime_Incidents.png')
+    # elif selected_field == 'Distribution of Incident Scores':
+    #     st.image('./plots/Distribution_of_Incident_Scores.png')
+    # elif selected_field == 'Correlation Matrix':
+    #     st.image('./plots/Correlation_Matrix_Heatmap.png')
+    if selected_field == 'Boxplot of Incident Scores for Each Time Bin':
+        plot_boxplot_time_bin()
+    elif selected_field == 'Boxplot of Incident Scores':
+        plot_boxplot_incident_scores()
     elif selected_field == 'Distribution of Incident Scores':
-        st.image('./plots/Distribution_of_Incident_Scores.png')
-    elif selected_field == 'Correlation Matrix':
-        st.image('./plots/Correlation_Matrix_Heatmap.png')
+        plot_distribution_of_incident_scores()
+    elif selected_field == 'Temporal Trends of Crime Incidents':
+        plot_temporal_trends_of_crime()
+    elif selected_field == 'Geospatial Distribution of Crime Incidents':
+        plot_geospatial_distribution_of_crime()
+    elif selected_field == 'Top 10 Council Districts Based on Crime Count':
+        plot_top_10_council_districts()
+    elif selected_field == 'Top 10 Locations Based on Crime Count':
+        plot_top_10_locations()
+    elif selected_field == 'Percentage of Crime by Time Bin':
+        plot_percentage_by_time_bin()
+    elif selected_field == 'Percentage of Crime by Weekday':
+        plot_crime_by_weekday()
 
 def ZipCode_DataFrame():
     # Group the data by zip code and count the number of entries for each zip code
